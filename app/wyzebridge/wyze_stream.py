@@ -259,7 +259,6 @@ class WyzeStream:
             "substream": self.options.substream,
             "model_name": self.camera.model_name,
             "is_2k": self.camera.is_2k,
-            "is_kvs": self.camera.is_kvs,
             "rtsp_fw": self.camera.rtsp_fw,
             "rtsp_fw_enabled": self.rtsp_fw_enabled,
             "is_battery": self.camera.is_battery,

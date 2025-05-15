@@ -1,5 +1,4 @@
 import os
-import subprocess
 import time
 from functools import wraps
 from pathlib import Path
@@ -8,7 +7,6 @@ from urllib.parse import quote_plus
 from flask import (
     Flask,
     Response,
-    abort,
     make_response,
     redirect,
     render_template,
@@ -26,11 +24,6 @@ def create_app():
     app = Flask(__name__)
     wb = WyzeBridge()
     try:
-        subprocess.Popen(
-            ["whep_proxy"],
-            stdout=None,  # None means inherit from parent process
-            stderr=None   # None means inherit from parent process
-        )
         wb.start()
     except RuntimeError as ex:
         print(ex)
@@ -259,14 +252,6 @@ def create_app():
         resp = make_response(render_template("m3u8.html", cameras=cameras))
         resp.headers.set("content-type", "application/x-mpegURL")
         return resp
-    
-    @app.route("/start_mtx_proxy/<string:cam_name>")
-    def start_kvs_stream(cam_name: str):
-        status = wb.api.setup_mtx_proxy(cam_name)
-        if not status:
-            return abort(404)
-
-        return redirect(f"http://localhost:8080/whep/{cam_name}", code=201)
 
     return app
 
