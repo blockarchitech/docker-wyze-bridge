@@ -8,7 +8,7 @@ import yaml
 from wyzebridge.bridge_utils import env_bool
 from wyzebridge.logging import logger
 
-MTX_CONFIG = "./mediamtx.yml"
+MTX_CONFIG = "/app/mediamtx.yml"
 
 RECORD_LENGTH = env_bool("RECORD_LENGTH", "60s")
 RECORD_KEEP = env_bool("RECORD_KEEP", "0s")
@@ -90,7 +90,6 @@ class MtxServer:
             mtx.set("pathDefaults.recordPath", record_path)
             mtx.set("pathDefaults.recordSegmentDuration", RECORD_LENGTH)
             mtx.set("pathDefaults.recordDeleteAfter", RECORD_KEEP)
-            mtx.set("logLevel", "debug")
 
     def setup_auth(self, api: Optional[str], stream: Optional[str]):
         publisher = [
@@ -111,18 +110,14 @@ class MtxServer:
                 for client in parse_auth(stream):
                     mtx.add("authInternalUsers", client)
 
-    def add_path(self, uri: str, on_demand: bool = True, is_kvs: bool = False):
+    def add_path(self, uri: str, on_demand: bool = True):
         with MtxInterface() as mtx:
-            if is_kvs:
-                mtx.set(f"paths.{uri}.source", f"whep://localhost:8080/whep/{uri}")
-                mtx.set(f"paths.{uri}.sourceOnDemand", True)
+            if on_demand:
+                cmd = f"bash -c 'echo $MTX_PATH,{{}}! > /tmp/mtx_event'"
+                mtx.set(f"paths.{uri}.runOnDemand", cmd.format("start"))
+                mtx.set(f"paths.{uri}.runOnUnDemand", cmd.format("stop"))
             else:
-                if on_demand:
-                    cmd = f"bash -c 'echo $MTX_PATH,{{}}! > /tmp/mtx_event'"
-                    mtx.set(f"paths.{uri}.runOnDemand", cmd.format("start"))
-                    mtx.set(f"paths.{uri}.runOnUnDemand", cmd.format("stop"))
-                else:
-                    mtx.set(f"paths.{uri}", {})
+                mtx.set(f"paths.{uri}", {})
 
     def add_source(self, uri: str, value: str):
         with MtxInterface() as mtx:
@@ -142,9 +137,7 @@ class MtxServer:
         if self.sub_process:
             return
         logger.info(f"[MTX] starting MediaMTX {getenv('MTX_TAG')}")
-        self.sub_process = Popen(
-            ["./mediamtx", "./mediamtx.yml"], stdout=None, stderr=None
-        )
+        self.sub_process = Popen(["/app/mediamtx", "/app/mediamtx.yml"])
 
     def stop(self):
         if not self.sub_process:

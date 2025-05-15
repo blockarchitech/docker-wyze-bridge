@@ -7,7 +7,6 @@ import errno
 import os
 import select
 
-from wyzebridge.wyze_stream import WyzeStream
 from wyzebridge.logging import logger
 from wyzebridge.mqtt import update_mqtt_state
 
@@ -22,7 +21,7 @@ class RtspEvent:
 
     def __init__(self, streams):
         self.pipe = 0
-        self.streams: dict[str, WyzeStream] = streams
+        self.streams = streams
         self.buf: str = ""
         self.open_pipe()
 
